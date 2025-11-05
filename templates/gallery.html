@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Guess What?{% endblock %}
+
+{% block content %}
+
+<!-- 引用 CSS -->
+<link rel="stylesheet" href="{% static 'css/gallery.css' %}">
+
+<!-- 卡片容器 -->
+<div id="stage-container">
+  <div id="stage" class="stage"></div>
+</div>
+<div id="zoom-viewer">
+  <img src="">
+</div>
+
+
+<!-- 引用 JS -->
+<script src="{% static 'js/gallery.js' %}"></script>
+
+{% endblock %}
