@@ -1,131 +1,229 @@
+/* --------------------------------------------------------
+   版面配置變數（用 CSS 變數動態調整格子數與動畫速度）
+--------------------------------------------------------- */
 :root {
-  --cols: auto;
-  --rows: auto;
-  --gap: 0px; /* ✅ 不顯格子縫 */
-  --duration: 600ms;
-  --easing: cubic-bezier(.2,.8,.2,1);
+  --cols: auto;              /* 由 JS 設定：每列幾格 */
+  --rows: auto;              /* 由 JS 設定：每欄幾格 */
+  --gap: 0px;                /* 格子之間的縫隙（這裡設 0 隱形） */
+  --duration: 600ms;         /* 翻面動畫時間 */
+  --easing: cubic-bezier(.2,.8,.2,1); /* 翻面動畫曲線 */
 }
 
+
+header {
+  background: linear-gradient(to right, #ffe6f0, #f0e6ff); /* 粉→淡紫藍 */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 微陰影 */
+  border-bottom: 2px solid rgba(255, 192, 203, 0.5);
+  text-align: center;
+  padding: 1.5rem 0;
+  position: relative;
+}
+
+header h2 {
+  color: #674d5c;
+  font-family: 'Poppins', 'Noto Sans TC', sans-serif;
+  font-weight: 600;
+  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-shadow: 0 1px 3px rgba(255,255,255,0.7);
+}
+
+header h2::before {
+  content: "💭";
+  font-size: 1.6rem;
+  animation: floatBubble 3s ease-in-out infinite;
+}
+
+/* 可愛的小泡泡上下浮動 */
+@keyframes floatBubble {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ✅ hover 時標題微微上浮 */
+header:hover h2 {
+  transform: translateY(-2px);
+}
+
+/* --------------------------------------------------------
+   圖片網格舞台（容納所有 tile 的容器）
+--------------------------------------------------------- */
 #stage.stage {
   display: grid;
-  grid-template-columns: repeat(var(--cols), 1fr);
-  grid-template-rows: repeat(var(--rows), 1fr);
+  grid-template-columns: repeat(var(--cols), 1fr); /* 動態生成 column */
+  grid-template-rows: repeat(var(--rows), 1fr);    /* 動態生成 row */
   gap: 0;
-
-  /* height: calc(100vh - 250px); ✅ 調整：扣掉 header+footer 高度 */
-  height: 65vh;
-  width: 100vw;
-  overflow: hidden;
-  background: white;
+  height: 70vh;           /* 佔視窗 65%高度（保留 header+footer） */
+  width: 100vw;           /* 寬佔滿整個視窗 */
+  overflow: hidden;       /* 不允許滾動 */
+  background: white;      /* 初始畫面看起來是空白 */
 }
 
-/* 每個格子要有可見的尺寸：用比例來定高 */
+/* --------------------------------------------------------
+   每個格子（Tile = 翻牌的畫格）
+--------------------------------------------------------- */
 .tile {
   width: 100%;
   height: 100%;
   overflow: hidden;
 }
 
-
-
+/* 網頁全局設定 */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow-x: hidden; /* 只禁止 X 捲軸 */
+  overflow-x: hidden;   /* 禁止橫向捲動條 */
 }
 
+/* 讓 stage 可以填滿空間 */
 #stage {
   flex: 1;
 }
 
-/* ✅ tile 初始純透明，完全看不到 */
+/* Tile 初始為透明，避免在沒 hover 時看到格子 */
 .tile {
   position: relative;
   background: transparent;
-  border-radius: 0; /* ✅ 無圓角，避免形狀露出 */
-  perspective: 1000px;
+  border-radius: 0;
+  perspective: 1000px; /* 讓 Y 軸翻轉更有 3D 感 */
   overflow: hidden;
 }
 
-/* 翻牌容器 */
+/* --------------------------------------------------------
+   翻牌卡片容器
+--------------------------------------------------------- */
 .card {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
-  transition: transform var(--duration) var(--easing);
+  transform-style: preserve-3d; /* 啟用 3D 翻轉 */
+  transition: transform var(--duration) var(--easing); /* 翻轉動畫 */
 }
 
-/* 背面 = 白 → 初始狀態 */
+/* --------------------------------------------------------
+   背面（預設看到的面：白色，保持神祕空白）
+--------------------------------------------------------- */
 .back {
   background: white !important;
   position: absolute;
   inset: 0;
-  backface-visibility: hidden;
-  transform: rotateY(0deg); /* ✅ 初始顯示白色面 */
+  backface-visibility: hidden;  /* 背面不可見 */
+  transform: rotateY(0deg);
 }
 
-/* 正面 = 粉色 + 照片（hover 才看到） */
+/* --------------------------------------------------------
+   正面（圖片 + 粉色背景）
+--------------------------------------------------------- */
 .front {
   background: transparent;
   position: absolute;
   inset: 0;
-  transform: rotateY(180deg);
+  transform: rotateY(180deg); /* 隱藏正面，待翻轉 */
   backface-visibility: hidden;
 }
 
-/* ✅ 照片先隱藏 */
+/* 圖片設定：初始不顯示、hover 才顯示 */
 .front img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  background: #fcd2d9;
-  display: none;
+  object-fit: contain;  /* 保持原比例完整呈現 */
+  background: #fcd2d9;   /* 粉色底 */
+  display: none;         /* hover 前先隱藏 */
 }
 
-/* ✅ Hover 才翻出正面 */
+/* --------------------------------------------------------
+   ✅ Hover 動畫
+--------------------------------------------------------- */
 .tile:hover .card {
-  transform: rotateY(180deg);
+  transform: rotateY(180deg); /* 滑過翻牌 */
 }
 
-/* ✅ Hover 才顯示照片與粉底 */
 .tile:hover .front {
-  background: #ffc9d2;
+  background: #ffc9d2;   /* 顯示粉色背景 */
 }
 
 .tile:hover .front img {
-  display: block;
+  display: block;        /* 顯示圖片 */
 }
 
+/* 取消任何可能的預設邊線影響 */
 .tile, .card, .front, .back {
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
 }
 
-
-
-/* === Zoom Lightbox ===================================== */
+/* --------------------------------------------------------
+   ✅ Zoom Lightbox（圖片點擊放大模式）
+--------------------------------------------------------- */
+/* === Zoom Lightbox：粉藍柔光卡片風 =========================== */
+/* === Zoom Lightbox：粉藍漸層相框風 =========================== */
 #zoom-viewer {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85);
+  background: linear-gradient(135deg, #ffe6f1 0%, #e3f3ff 100%); /* 🌈 粉+藍背景漸層 */
   display: none;
   justify-content: center;
   align-items: center;
+  backdrop-filter: blur(12px);
   z-index: 9999;
 }
 
-#zoom-viewer img {
-  max-width: 90vw;
-  max-height: 90vh;
-  object-fit: contain;
-  border-radius: 10px;
-  box-shadow: 0 0 30px rgba(255, 203, 225, 0.5);
-  animation: fadeInZoom .25s ease-out;
+/* 外框容器：帶柔光的粉藍漸層框 */
+#zoom-viewer .zoom-frame {
+  position: relative;
+  width: 80vmin;    /* 正方形框 */
+  height: 80vmin;
+  border-radius: 22px;
+  padding: 12px;
+  background: linear-gradient(145deg, #fce5f5, #d9edff);
+  box-shadow:
+    0 0 40px rgba(255, 200, 230, 0.4),
+    0 0 60px rgba(180, 210, 255, 0.35),
+    inset 0 0 15px rgba(255, 255, 255, 0.6);
+  border: 3px solid rgba(190, 220, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: softPop 0.4s ease-out;
 }
 
-@keyframes fadeInZoom {
-  from { transform: scale(0.8); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
+/* 圖片樣式 */
+#zoom-viewer img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 16px;
+  background: linear-gradient(to bottom, #fcd6f6 0%, #d0dffd 100%);
+  box-shadow:
+    0 0 30px rgba(255, 240, 250, 0.4),
+    0 0 50px rgba(190, 220, 255, 0.3);
+  transition: transform 0.3s ease;
+}
+
+
+/* hover 時微放大 */
+#zoom-viewer img:hover {
+  transform: scale(1.03);
+}
+
+/* Photo by 標籤 */
+.zoom-caption {
+  position: absolute;
+  bottom: -50px; /* 位於相框下方 */
+  text-align: center;
+  font-family: 'Poppins', 'Noto Sans TC', sans-serif;
+  font-size: 0.95rem;
+  color: #6f87a8;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  opacity: 0.9;
+  letter-spacing: 0.5px;
+}
+
+/* 動畫 */
+@keyframes softPop {
+  from { transform: scale(0.9) translateY(20px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
 }

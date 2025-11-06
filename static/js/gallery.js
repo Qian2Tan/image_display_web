@@ -75,27 +75,35 @@ function autoScaleGrid() {
 // 4) 填入圖片
 // 5) 縮放 grid
 // --------------------------
+// --------------------------
+// 初始化
+// --------------------------
 async function init() {
   let list = [];
-
   try {
     const res = await fetch("/web_tool/photos.json");
-    list = await res.json(); // 後端給的圖片清單
+    list = await res.json();
   } catch {
-    // ✅ 沒照片或錯誤 → 用臨時圖片
     list = [...Array(12)].map((_, i) => `https://picsum.photos/seed/${i}/800/600`);
   }
 
-  const { cols, rows } = computeGrid(list.length);
+  // ✅ 打亂順序（第二功能）
+  list = list.sort(() => Math.random() - 0.5);
 
-  // 把計算結果寫入 CSS 變數
+  // 計算排版
+  const { cols, rows } = computeGrid(list.length);
+  const totalSlots = cols * rows;
+
+  // ✅ 取可整除數量，丟掉多的
+  list = list.slice(0, totalSlots);
+
   document.documentElement.style.setProperty('--cols', cols);
   document.documentElement.style.setProperty('--rows', rows);
 
   createGrid(list.length);
   fillImages(list);
 
-  // ✅ 網格產生後再縮放，避免抓不到高度
+  // ✅ grid 產生完後再計算 scale
   requestAnimationFrame(autoScaleGrid);
 }
 
